@@ -1,0 +1,133 @@
+-- [[ Hitbox Extender - VIP UI Script ]] --
+
+-- ดึง Library สำหรับสร้าง UI
+local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source'))()
+
+-- สร้างหน้าต่างหลัก (Window)
+local Window = OrionLib:MakeWindow({
+    Name = "สคริปต์ (ของVIP)", 
+    HidePremium = false, 
+    SaveConfig = false, 
+    ConfigFolder = "VIPHitboxConfig",
+    IntroText = "ยินดีต้อนรับสมาชิก VIP"
+})
+
+-- ตัวแปรตั้งค่าระบบ
+local Settings = {
+    Enabled = false,
+    Size = 5,
+    Transparency = 0.7,
+    Outline = true
+}
+
+-- ฟังก์ชันหลักในการขยาย Hitbox หัว
+local function ApplyHitbox(player)
+    if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+        local head = player.Character.Head
+        
+        if Settings.Enabled then
+            -- ปรับขนาดและคุณสมบัติของ Head
+            head.Size = Vector3.new(Settings.Size, Settings.Size, Settings.Size)
+            head.Transparency = Settings.Transparency
+            head.BrickColor = BrickColor.new("Really red")
+            head.Material = Enum.Material.Neon
+            head.CanCollide = false
+            
+            -- ระบบกรอบไฮไลท์ (Outline)
+            if Settings.Outline then
+                if not head:FindFirstChild("VIPHighlight") then
+                    local box = Instance.new("SelectionBox")
+                    box.Name = "VIPHighlight"
+                    box.Adornee = head
+                    box.Color3 = Color3.fromRGB(255, 0, 0)
+                    box.Parent = head
+                end
+            else
+                if head:FindFirstChild("VIPHighlight") then
+                    head.VIPHighlight:Destroy()
+                end
+            end
+        else
+            -- คืนค่าเดิมเมื่อปิดระบบ
+            head.Size = Vector3.new(1.15, 1.15, 1.15)
+            head.Transparency = 0
+            head.CanCollide = true
+            if head:FindFirstChild("VIPHighlight") then
+                head.VIPHighlight:Destroy()
+            end
+        end
+    end
+end
+
+-- ลูปอัปเดตผู้เล่นทุกคนในเกมตลอดเวลา
+task.spawn(function()
+    while task.wait(0.5) do
+        for _, player in pairs(game.Players:GetPlayers()) do
+            pcall(function()
+                ApplyHitbox(player)
+            end)
+        end
+    end
+end)
+
+----------------------------------------------------
+-- เมนูและปุ่มควบคุมใน UI
+----------------------------------------------------
+local MainTab = Window:MakeTab({
+    Name = "Hitbox Head",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+MainTab:AddSection({
+    Name = "ตั้งค่า Hitbox (สำหรับ VIP)"
+})
+
+-- ปุ่ม เปิด/ปิด ระบบ
+MainTab:AddToggle({
+    Name = "เปิดใช้งาน Hitbox Extender",
+    Default = false,
+    Callback = function(Value)
+        Settings.Enabled = Value
+    end    
+})
+
+-- แถบปรับขนาด Hitbox
+MainTab:AddSlider({
+    Name = "ขนาดหัว (Head Size)",
+    Min = 1,
+    Max = 30,
+    Default = 5,
+    Color = Color3.fromRGB(255, 50, 50),
+    Increment = 1,
+    ValueName = "ขนาด",
+    Callback = function(Value)
+        Settings.Size = Value
+    end    
+})
+
+-- แถบปรับความโปร่งใส
+MainTab:AddSlider({
+    Name = "ความโปร่งใส (Transparency)",
+    Min = 0,
+    Max = 1,
+    Default = 0.7,
+    Color = Color3.fromRGB(255, 255, 255),
+    Increment = 0.1,
+    ValueName = "ความใส",
+    Callback = function(Value)
+        Settings.Transparency = Value
+    end    
+})
+
+-- ปุ่ม เปิด/ปิด เส้นขอบไฮไลท์
+MainTab:AddToggle({
+    Name = "เปิดเส้นขอบ (Selection Box)",
+    Default = true,
+    Callback = function(Value)
+        Settings.Outline = Value
+    end    
+})
+
+-- เริ่มการทำงานของ UI
+OrionLib:Init()
